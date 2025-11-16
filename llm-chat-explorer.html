@@ -1724,10 +1724,11 @@
 
     // Helper function to sanitize filename
     function sanitizeFilename(filename) {
+      // Only remove characters that are actually problematic for filenames
+      // Keep spaces, hyphens, parentheses, etc.
       return filename
-        .replace(/[^a-z0-9]/gi, '_')
-        .replace(/_+/g, '_')
-        .substring(0, 100);
+        .replace(/[\/\\:*?"<>|]/g, '-')
+        .substring(0, 200);
     }
 
     // Helper function to download file
