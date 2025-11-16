@@ -1653,88 +1653,10 @@
 
     // Function to get CSS styles for export
     function getExportStyles() {
-      const isDarkMode = document.body.classList.contains('dark-mode');
       const styleElement = document.querySelector('style');
-
       if (!styleElement) return '';
 
-      const fullCSS = styleElement.textContent;
-
-      // Extract the CSS we need for export
-      const rootMatch = fullCSS.match(/:root\s*\{[^}]+\}/);
-      const darkModeMatch = fullCSS.match(/body\.dark-mode\s*\{[^}]+\}/);
-      const darkModeCodeBlockMatch = fullCSS.match(/body\.dark-mode \.code-block\s*\{[^}]+\}/);
-      const resetMatch = fullCSS.match(/\*\s*\{[^}]+\}/);
-      const bodyMatch = fullCSS.match(/body\s*\{[^}]+\}/);
-      const messageMatch = fullCSS.match(/\.message\s*\{[^}]+\}/);
-      const messageUserMatch = fullCSS.match(/\.message-user\s*\{[^}]+\}/);
-      const messageAssistantMatch = fullCSS.match(/\.message-assistant\s*\{[^}]+\}/);
-      const messageHeaderMatch = fullCSS.match(/\.message-header\s*\{[^}]+\}/);
-      const avatarMatch = fullCSS.match(/\.avatar\s*\{[^}]+\}/);
-      const senderMatch = fullCSS.match(/\.sender\s*\{[^}]+\}/);
-      const messageContentMatch = fullCSS.match(/\.message-content\s*\{[^}]+\}/);
-      const codeBlockMatch = fullCSS.match(/\.code-block\s*\{[^}]+\}/);
-
-      let css = '';
-
-      if (rootMatch) css += rootMatch[0] + '\n    ';
-
-      if (isDarkMode && darkModeMatch) {
-        // Replace body.dark-mode with body for the export
-        css += darkModeMatch[0].replace('body.dark-mode', 'body') + '\n    ';
-        if (darkModeCodeBlockMatch) {
-          css += darkModeCodeBlockMatch[0].replace('body.dark-mode ', '') + '\n    ';
-        }
-      }
-
-      if (resetMatch) css += resetMatch[0] + '\n    ';
-
-      // Override body styles for export layout
-      css += `
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: var(--text-color);
-      background-color: var(--content-bg);
-      line-height: 1.6;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-
-    h1 {
-      color: var(--primary-color);
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 10px;
-      margin-bottom: 10px;
-    }
-
-    .metadata {
-      color: var(--text-light);
-      margin-bottom: 30px;
-      font-size: 0.9rem;
-    }
-    `;
-
-      if (messageMatch) css += messageMatch[0] + '\n    ';
-      if (messageUserMatch) css += messageUserMatch[0] + '\n    ';
-      if (messageAssistantMatch) css += messageAssistantMatch[0] + '\n    ';
-      if (messageHeaderMatch) css += messageHeaderMatch[0] + '\n    ';
-      if (avatarMatch) css += avatarMatch[0] + '\n    ';
-      if (senderMatch) css += senderMatch[0] + '\n    ';
-      if (messageContentMatch) css += messageContentMatch[0] + '\n    ';
-      if (codeBlockMatch && !isDarkMode) css += codeBlockMatch[0] + '\n    ';
-
-      css += `
-    a {
-      color: var(--primary-color);
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }`;
-
-      return css;
+      return styleElement.textContent;
     }
 
     // Function to export as HTML
