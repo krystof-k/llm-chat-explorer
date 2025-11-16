@@ -1141,6 +1141,37 @@
       return `${day}/${month}/${year}`;
     }
 
+    // Function to format message content
+    function formatMessage(text) {
+      if (!text) return '';
+      // Convert links and code blocks
+      text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color: var(--primary-color);">$1</a>');
+      text = text.replace(/```(\w*)\n?([\s\S]+?)```/g, (match, lang, code) => {
+        const trimmedCode = code.trim();
+        const codeElement = `<pre class="code-block">${escapeHtml(trimmedCode)}</pre>`;
+
+        let copyButton = '';
+        if (!trimmedCode.startsWith("Viewing artifacts")) {
+            copyButton = `<button class="copy-code-btn" onclick="copyCode(this)">Copy</button>`;
+        }
+
+        return `<div class="code-block-container">${copyButton}${codeElement}</div>`;
+      });
+      text = text.replace(/(?<!<\/pre>)\n/g, '<br>');
+
+      // Highlight searched words in the content if the checkbox is active
+      const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
+      const searchInContent = document.getElementById("search-content-toggle") && document.getElementById("search-content-toggle").checked;
+      if (searchTerm && searchInContent) {
+        const words = searchTerm.split(/\s+/).filter(word => word.length > 0);
+        words.forEach(word => {
+        const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')})`, 'gi');
+        text = text.replace(regex, `<span class="highlight">$1</span>`);
+        });
+      }
+      return text;
+    }
+
     function processData(data) {
       const lang = localStorage.getItem('language') || 'en';
       let conversations = [];
@@ -1385,36 +1416,7 @@
       const chatContent = document.getElementById("chat-content");
       chatContent.scrollTop = scrollPreference === 'end' ? chatContent.scrollHeight : 0;
       }
-      function formatMessage(text) {
-      if (!text) return '';
-      // Convert links and code blocks
-      text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" style="color: var(--primary-color);">$1</a>');
-      text = text.replace(/```(\w*)\n?([\s\S]+?)```/g, (match, lang, code) => {
-        const trimmedCode = code.trim();
-        const codeElement = `<pre class="code-block">${escapeHtml(trimmedCode)}</pre>`;
-        
-        let copyButton = '';
-        if (!trimmedCode.startsWith("Viewing artifacts")) {
-            copyButton = `<button class="copy-code-btn" onclick="copyCode(this)">Copy</button>`;
-        }
-        
-        return `<div class="code-block-container">${copyButton}${codeElement}</div>`;
-      });
-      text = text.replace(/(?<!<\/pre>)\n/g, '<br>');
-      
-      // Highlight searched words in the content if the checkbox is active
-      const searchTerm = document.getElementById("search-bar").value.toLowerCase().trim();
-      const searchInContent = document.getElementById("search-content-toggle") && document.getElementById("search-content-toggle").checked;
-      if (searchTerm && searchInContent) {
-        const words = searchTerm.split(/\s+/).filter(word => word.length > 0);
-        words.forEach(word => {
-        const regex = new RegExp(`(${word.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')})`, 'gi');
-        text = text.replace(regex, `<span class="highlight">$1</span>`);
-        });
-      }
-      return text;
-      }
-    
+
       // Update the chat counter if defined
       document.getElementById("chat-counter-text").textContent = conversations.length + " " + translations[lang].chatCountSuffix;
 
