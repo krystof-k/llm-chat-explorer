@@ -1663,9 +1663,29 @@
 
     // Function to export as HTML
     function exportAsHTML(chatData) {
-      const lang = localStorage.getItem('language') || 'en';
+      // Get the current chat content HTML
+      const chatContent = document.getElementById('chat-content');
+      const chatTitle = document.getElementById('chat-title');
+      const contentHeader = document.querySelector('.content-header');
 
-      let html = `<!DOCTYPE html>
+      if (!chatContent || !chatTitle) return;
+
+      // Clone the content header and chat content
+      const headerClone = contentHeader.cloneNode(true);
+      const contentClone = chatContent.cloneNode(true);
+
+      // Remove share and export buttons from header
+      const shareButton = headerClone.querySelector('#share-button');
+      if (shareButton) shareButton.parentElement.remove();
+
+      const exportContainer = headerClone.querySelector('.export-container');
+      if (exportContainer) exportContainer.remove();
+
+      const chatLink = headerClone.querySelector('#chat-link');
+      if (chatLink) chatLink.remove();
+
+      // Build the HTML document
+      const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -1673,36 +1693,26 @@
   <title>${escapeHtml(chatData.title)}</title>
   <style>
     ${getExportStyles()}
+
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    .content {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
   </style>
 </head>
 <body>
-  <h1>${escapeHtml(chatData.title)}</h1>
-  <div class="metadata">`;
-
-      if (chatData.created_time) {
-        html += `<div><strong>Date:</strong> ${escapeHtml(chatData.created_time)}</div>`;
-      }
-      if (chatData.service) {
-        html += `<div><strong>Source:</strong> ${escapeHtml(chatData.service)}</div>`;
-      }
-
-      html += `</div>\n`;
-
-      chatData.messages.forEach((msg, index) => {
-        const sender = msg.role === 'user' ? translations[lang].userSender : chatData.service;
-        const messageClass = msg.role === 'user' ? 'message-user' : 'message-assistant';
-        const avatarLetter = msg.role === 'user' ? 'U' : 'A';
-
-        html += `  <div class="message ${messageClass}">
-    <div class="message-header">
-      <div class="avatar">${avatarLetter}</div>
-      <span>${escapeHtml(sender)}</span>
-    </div>
-    <div class="message-content">${formatMessage(msg.text)}</div>
-  </div>\n`;
-      });
-
-      html += `</body>
+  <div class="content">
+    ${headerClone.outerHTML}
+    ${contentClone.outerHTML}
+  </div>
+</body>
 </html>`;
 
       const filename = sanitizeFilename(chatData.title) + '.html';
