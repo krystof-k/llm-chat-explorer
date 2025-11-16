@@ -1653,14 +1653,6 @@
       downloadFile(markdown, filename, 'text/markdown');
     }
 
-    // Function to get CSS styles for export
-    function getExportStyles() {
-      const styleElement = document.querySelector('style');
-      if (!styleElement) return '';
-
-      return styleElement.textContent;
-    }
-
     // Function to export as HTML
     function exportAsHTML(chatData) {
       // Get the current chat content HTML
@@ -1703,7 +1695,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(chatData.title)}</title>
   <style>
-    ${getExportStyles()}
+    ${document.querySelector('style')?.textContent || ''}
 
     body {
       margin: 0;
