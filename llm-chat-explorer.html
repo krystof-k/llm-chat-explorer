@@ -568,6 +568,76 @@
         background-color: #444;
         color: #f0f0f0;
     }
+
+    /* Export button styles */
+    .export-container {
+        position: relative;
+        display: inline-block;
+    }
+
+    .export-button {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: var(--radius);
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+        font-size: 14px;
+        transition: opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    body.dark-mode .export-button {
+        color: #ffffff;
+    }
+
+    .export-button:hover {
+        opacity: 0.8;
+    }
+
+    .export-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 5px;
+        background-color: var(--content-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        min-width: 180px;
+        z-index: 1000;
+    }
+
+    .export-dropdown.show {
+        display: block;
+    }
+
+    .export-option {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-color);
+    }
+
+    .export-option:first-child {
+        border-radius: var(--radius) var(--radius) 0 0;
+    }
+
+    .export-option:last-child {
+        border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .export-option:hover {
+        background-color: var(--hover-color);
+    }
 </style>
 </head>
 <body>
@@ -628,9 +698,24 @@
           <i class="fas fa-share"></i>
         </button>
       </div>
-      <a id="chat-link" href="#" target="_blank" class="external-link" style="display: none;">
-        <i class="fas fa-external-link-alt"></i> View on 
-      </a>
+      <div style="display:inline-flex; align-items:center; gap:10px;">
+        <div class="export-container">
+          <button id="export-button" class="export-button" title="Export conversation" style="display: none;">
+            <i class="fas fa-download"></i> Export
+          </button>
+          <div id="export-dropdown" class="export-dropdown">
+            <div class="export-option" data-format="markdown">
+              <i class="fab fa-markdown"></i> Export as Markdown
+            </div>
+            <div class="export-option" data-format="html">
+              <i class="fab fa-html5"></i> Export as HTML
+            </div>
+          </div>
+        </div>
+        <a id="chat-link" href="#" target="_blank" class="external-link" style="display: none;">
+          <i class="fas fa-external-link-alt"></i> View on
+        </a>
+      </div>
       </div>
       <div id="chat-content" class="chat-messages">
       <div class="empty-state">
@@ -1244,6 +1329,18 @@
       const chat = chatData[chatId];
       document.getElementById("chat-title").textContent = chat.title;
       const chatLink = document.getElementById("chat-link");
+
+      // Set current chat data for export functionality
+      currentChatData = chat;
+
+      // Show export button if there are messages
+      const exportButton = document.getElementById("export-button");
+      if (chat.messages && chat.messages.length > 0) {
+        exportButton.style.display = "inline-flex";
+      } else {
+        exportButton.style.display = "none";
+      }
+
       if (chat.url) {
         chatLink.href = chat.url;
         chatLink.style.display = "inline-flex";
@@ -1339,6 +1436,17 @@
       document.getElementById("chat-title").textContent = chat.title;
       const lang = localStorage.getItem('language') || 'en';
       const chatLink = document.getElementById("chat-link");
+
+      // Set current chat data for export functionality
+      currentChatData = chat;
+
+      // Show export button if there are messages
+      const exportButton = document.getElementById("export-button");
+      if (chat.messages && chat.messages.length > 0) {
+        exportButton.style.display = "inline-flex";
+      } else {
+        exportButton.style.display = "none";
+      }
 
       // Only show the link if there are messages
       if (chat.messages && chat.messages.length > 0) {
@@ -1526,7 +1634,237 @@
         console.error(translations[lang].copyError + ": " + err);
       });
     });
-    
+
+    // Export functionality
+    let currentChatData = null;
+
+    // Function to export as Markdown
+    function exportAsMarkdown(chatData) {
+      const lang = localStorage.getItem('language') || 'en';
+      let markdown = `# ${chatData.title}\n\n`;
+
+      if (chatData.created_time) {
+        markdown += `**Date:** ${chatData.created_time}\n`;
+      }
+      if (chatData.service) {
+        markdown += `**Source:** ${chatData.service}\n`;
+      }
+      markdown += `\n---\n\n`;
+
+      chatData.messages.forEach((msg, index) => {
+        const sender = msg.role === 'user' ? translations[lang].userSender : chatData.service;
+        markdown += `## ${sender}\n\n${msg.text}\n\n`;
+      });
+
+      const filename = sanitizeFilename(chatData.title) + '.md';
+      downloadFile(markdown, filename, 'text/markdown');
+    }
+
+    // Function to export as HTML
+    function exportAsHTML(chatData) {
+      const lang = localStorage.getItem('language') || 'en';
+      const isDarkMode = document.body.classList.contains('dark-mode');
+
+      let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(chatData.title)}</title>
+  <style>
+    :root {
+      --primary-color: #10a37f;
+      --primary-light: #e6f7f2;
+      --text-color: #343541;
+      --text-light: #8e8ea0;
+      --bg-color: #ffffff;
+      --message-user-bg: #e6f7f2;
+      --message-assistant-bg: #f7f7f8;
+      --border-color: #e5e5e6;
+    }
+    ${isDarkMode ? `
+    body {
+      --primary-color: #10a37f;
+      --primary-light: #0e8a69;
+      --text-color: #f0f0f0;
+      --text-light: #aaa;
+      --bg-color: #121212;
+      --message-user-bg: #1e3a32;
+      --message-assistant-bg: #1e1e1e;
+      --border-color: #333;
+    }` : ''}
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text-color);
+      background-color: var(--bg-color);
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      color: var(--primary-color);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+    .metadata {
+      color: var(--text-light);
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+    .message {
+      margin-bottom: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .message-user {
+      background-color: var(--message-user-bg);
+      margin-left: 50px;
+    }
+    .message-assistant {
+      background-color: var(--message-assistant-bg);
+      margin-right: 50px;
+    }
+    .message-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background-color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+    .message-content {
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .code-block {
+      background-color: #2b2b2b;
+      color: #f8f8f2;
+      padding: 1em;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    a {
+      color: var(--primary-color);
+    }
+  </style>
+</head>
+<body>
+  <h1>${escapeHtml(chatData.title)}</h1>
+  <div class="metadata">`;
+
+      if (chatData.created_time) {
+        html += `<div><strong>Date:</strong> ${escapeHtml(chatData.created_time)}</div>`;
+      }
+      if (chatData.service) {
+        html += `<div><strong>Source:</strong> ${escapeHtml(chatData.service)}</div>`;
+      }
+
+      html += `</div>\n`;
+
+      chatData.messages.forEach((msg, index) => {
+        const sender = msg.role === 'user' ? translations[lang].userSender : chatData.service;
+        const messageClass = msg.role === 'user' ? 'message-user' : 'message-assistant';
+        const avatarLetter = msg.role === 'user' ? 'U' : 'A';
+
+        html += `  <div class="message ${messageClass}">
+    <div class="message-header">
+      <div class="avatar">${avatarLetter}</div>
+      <span>${escapeHtml(sender)}</span>
+    </div>
+    <div class="message-content">${formatMessageForExport(msg.text)}</div>
+  </div>\n`;
+      });
+
+      html += `</body>
+</html>`;
+
+      const filename = sanitizeFilename(chatData.title) + '.html';
+      downloadFile(html, filename, 'text/html');
+    }
+
+    // Helper function to format messages for export (similar to formatMessage but for export)
+    function formatMessageForExport(text) {
+      if (!text) return '';
+      text = escapeHtml(text);
+      // Convert links
+      text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+      // Convert code blocks
+      text = text.replace(/```(\w*)\n?([\s\S]+?)```/g, (match, lang, code) => {
+        return `<pre class="code-block">${code.trim()}</pre>`;
+      });
+      // Convert line breaks
+      text = text.replace(/\n/g, '<br>');
+      return text;
+    }
+
+    // Helper function to sanitize filename
+    function sanitizeFilename(filename) {
+      return filename
+        .replace(/[^a-z0-9]/gi, '_')
+        .replace(/_+/g, '_')
+        .substring(0, 100);
+    }
+
+    // Helper function to download file
+    function downloadFile(content, filename, mimeType) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Export button event listeners
+    const exportButton = document.getElementById('export-button');
+    const exportDropdown = document.getElementById('export-dropdown');
+
+    exportButton.addEventListener('click', function(e) {
+      e.stopPropagation();
+      exportDropdown.classList.toggle('show');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.export-container')) {
+        exportDropdown.classList.remove('show');
+      }
+    });
+
+    // Handle export option clicks
+    document.querySelectorAll('.export-option').forEach(option => {
+      option.addEventListener('click', function() {
+        const format = this.getAttribute('data-format');
+        exportDropdown.classList.remove('show');
+
+        if (currentChatData) {
+          if (format === 'markdown') {
+            exportAsMarkdown(currentChatData);
+          } else if (format === 'html') {
+            exportAsHTML(currentChatData);
+          }
+        }
+      });
+    });
+
   </script>
 </body>
 </html>
