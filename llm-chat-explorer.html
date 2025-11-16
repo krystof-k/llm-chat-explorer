@@ -1696,7 +1696,7 @@
       <div class="avatar">${avatarLetter}</div>
       <span>${escapeHtml(sender)}</span>
     </div>
-    <div class="message-content">${formatMessageForExport(msg.text)}</div>
+    <div class="message-content">${formatMessage(msg.text)}</div>
   </div>\n`;
       });
 
@@ -1705,21 +1705,6 @@
 
       const filename = sanitizeFilename(chatData.title) + '.html';
       downloadFile(html, filename, 'text/html');
-    }
-
-    // Helper function to format messages for export (similar to formatMessage but for export)
-    function formatMessageForExport(text) {
-      if (!text) return '';
-      text = escapeHtml(text);
-      // Convert links
-      text = text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-      // Convert code blocks
-      text = text.replace(/```(\w*)\n?([\s\S]+?)```/g, (match, lang, code) => {
-        return `<pre class="code-block">${code.trim()}</pre>`;
-      });
-      // Convert line breaks
-      text = text.replace(/\n/g, '<br>');
-      return text;
     }
 
     // Helper function to sanitize filename
