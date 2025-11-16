@@ -1674,15 +1674,26 @@
       const headerClone = contentHeader.cloneNode(true);
       const contentClone = chatContent.cloneNode(true);
 
-      // Remove share and export buttons from header
+      // Remove share button only (not its parent which contains the title)
       const shareButton = headerClone.querySelector('#share-button');
-      if (shareButton) shareButton.parentElement.remove();
+      if (shareButton) shareButton.remove();
 
-      const exportContainer = headerClone.querySelector('.export-container');
-      if (exportContainer) exportContainer.remove();
+      // Remove the entire right side div (export container and chat link)
+      const rightSideDiv = headerClone.querySelector('div[style*="display:inline-flex"]:last-child');
+      if (rightSideDiv) rightSideDiv.remove();
 
-      const chatLink = headerClone.querySelector('#chat-link');
-      if (chatLink) chatLink.remove();
+      // Add date metadata if available
+      if (chatData.created_time) {
+        const titleContainer = headerClone.querySelector('div[style*="display:inline-flex"]');
+        if (titleContainer) {
+          const dateSpan = document.createElement('span');
+          dateSpan.style.marginLeft = '10px';
+          dateSpan.style.fontSize = '0.9rem';
+          dateSpan.style.color = 'var(--text-light)';
+          dateSpan.textContent = `(${chatData.created_time})`;
+          titleContainer.appendChild(dateSpan);
+        }
+      }
 
       // Build the HTML document
       const html = `<!DOCTYPE html>
