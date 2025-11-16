@@ -1646,9 +1646,6 @@
       if (chatData.created_time) {
         markdown += `**Date:** ${chatData.created_time}\n`;
       }
-      if (chatData.service) {
-        markdown += `**Source:** ${chatData.service}\n`;
-      }
       markdown += `\n---\n\n`;
 
       chatData.messages.forEach((msg, index) => {
